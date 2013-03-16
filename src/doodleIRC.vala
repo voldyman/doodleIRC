@@ -13,16 +13,16 @@ namespace doodleIRC {
         public signal void on_names_listed (string chan,string[] names);
 
 
-        public List<string>                 chans;
-        string                              nick;
-        bool                                away;
-        string                              server_url;
-        User                                user;
-        SocketConnection                    connection;
-        DataInputStream                     response;
-        bool                                connected;
-        List<string>                        to_send;
-        Gee.HashMap<string, string>         list_of_names;
+        public List<string> chans;
+        string nick;
+        bool away;
+        string server_url;
+        User user;
+        SocketConnection connection;
+        DataInputStream response;
+        bool connected;
+        List<string> to_send;
+        Gee.HashMap<string, string> list_of_names;
 
         public DoodleIRCServer (string url, User user,string nick) {
             this.server_url = url;

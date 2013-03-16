@@ -7,12 +7,6 @@ void main (string[] args) {
         username = "voldybot",
         servername = "irc.freenode.net"
     };
-    /*Thread<int> t1= new Thread<int>.try (null, () => {
-        var freenode = new DoodleIRCServer ("irc.freenode.net", foobar, "voldybot" ,chans);
-        freenode.loop ();
-        return 0;
-    });
-    t1.join ();*/
     string nick = "voldyclient";
 
     var freenode = new DoodleIRCServer ("irc.freenode.net", foobar, nick);
@@ -80,7 +74,6 @@ void main (string[] args) {
         freenode.disconnect ();
         freenode = null;
         Gtk.main_quit ();
-        //freenode.quit_server ("bye");
     });
 
     freenode.on_names_listed.connect ((chans,names) => {
