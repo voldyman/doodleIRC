@@ -1,6 +1,8 @@
 using doodleIRC;
+
 void main (string[] args) {
     Gtk.init(ref args);
+
     User foobar = User () {
         realname = "Test Client",
         hostname = "voldyman",
@@ -37,6 +39,8 @@ void main (string[] args) {
 
     send_button.clicked.connect (()=> {
         var text = send_entry.text;
+
+        /* if the clients text is an irc command */
         if (text[0] == '/') {
             switch (text.split (" ")[0].replace ("/","")) {
                 case "me":
@@ -66,7 +70,6 @@ void main (string[] args) {
     });
 
     connect_btn.clicked.connect (() => {
-        //freenode.connect ();
         freenode.join_chan (channel_entry.text);
     });
 

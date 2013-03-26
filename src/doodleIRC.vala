@@ -42,7 +42,6 @@ namespace doodleIRC {
                     raw_send (cmd);
                     to_send.remove (cmd);
                 });
-
             });
         }
 
@@ -53,7 +52,6 @@ namespace doodleIRC {
 
 
         public async void connect (string server = "") {
-
             try {
                 // Resolve hostname to IP address
                 var resolver = Resolver.get_default ();
@@ -98,7 +96,7 @@ namespace doodleIRC {
                 wait ();
         }
 
-        void parse_line (string line) {
+        private void parse_line (string line) {
 
             print (line+"\n");
             if (line[0] != ':') {
@@ -118,12 +116,11 @@ namespace doodleIRC {
             }
         }
 
-        void process_named_message (string line) {
+        private void process_named_message (string line) {
             string sender="",cmd="",chan="",msg="";
             parse_named_msg (line, out sender,out cmd, out  chan, out msg);
 
             switch (cmd.up ()) {
-
                 case "PRIVMSG":
                     if (msg.split (" ")[0] == "\001ACTION") {
                         msg = msg.replace ("ACTION ", "");
@@ -144,11 +141,10 @@ namespace doodleIRC {
                     print ("User has Joined");
                     on_user_join (chan, nick);
                     return;
-
             }
         }
 
-        void process_named_server_message (string line) {
+        private void process_named_server_message (string line) {
             var cmd = line.split (" ")[0].strip ();
             var msg = line.split (" :")[1].strip ();
             switch (cmd.up ()) {
@@ -169,12 +165,12 @@ namespace doodleIRC {
             }
         }
 
-        void process_numeric_cmd (string line) {
+        private void process_numeric_cmd (string line) {
             var first_split = line.split (" ");
             var sender = first_split[0].strip ();
             var cmd    = first_split[1].strip ();
             var msg    = line.split (" :")[1].strip ();
-
+            /* more info about these commands can be found at the IRC RFC page */
             switch (cmd) {
                 case "001":
                     on_connect_complete ();
@@ -210,11 +206,11 @@ namespace doodleIRC {
                     }
                     list_of_names.clear ();
                     return;
-
             }
         }
 
-        void parse_named_msg (string line, out string sender,out string cmd, out string chan, out string msg) {
+        private void parse_named_msg (string line, out string sender,out string cmd,
+                                      out string chan, out string msg) {
             //split the message from the info
             var first_split = line.split (":");
             var info = first_split[1];
@@ -243,6 +239,7 @@ namespace doodleIRC {
             else
                 to_send.append (cmd);
         }
+
         private void rejoin_channels () {
             // Send JOIN request
             foreach (string chan in chans) {
@@ -250,6 +247,7 @@ namespace doodleIRC {
                 print ("Wrote request to join %s\n".printf (chan));
             }
         }
+
         public void kick_user (string chan, string user, string reason) {
             send ("KICK %s %s :%s\r\n".printf (chan, user, reason));
         }
