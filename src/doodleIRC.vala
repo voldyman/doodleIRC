@@ -29,6 +29,7 @@ namespace doodleIRC {
         public signal void on_notice (string notice);
         public signal void on_error (string error_msg);
         public signal void on_user_join (string chan, string nick);
+        public signal void on_join_complete (string chan, string nick);
         public signal void on_user_quit (string chan, string nick, string msg);
         public signal void on_names_listed (string chan,string[] names);
 
@@ -126,10 +127,8 @@ namespace doodleIRC {
             if (line[0] == ':') {
                 if ((line.split (" ")[1][0]).isdigit ()) {
                     process_numeric_cmd (line);
-                    return;
                 } else {
                     process_named_message (line);
-                    return;
                 }
             }
         }
@@ -144,22 +143,26 @@ namespace doodleIRC {
                         msg = msg.replace ("ACTION ", "");
                         msg = msg.replace ("\001", "");
                         on_action (sender, chan, msg);
-                        return;
+                        break;
                     }
 
                     print ("Chan-> "+chan+"\nMSG-> "+msg+"\n");
                     on_message (sender, chan, msg);
-                    return;
+                    break;
 
                 case "QUIT":
                     print (" %s has quit\n".printf (sender));
                     on_user_quit (chan, sender, msg);
-                    return;
+                    break;
 
                 case "JOIN":
+                    if (sender == nick) {
+                        on_join_complete (chan, sender);
+                        break;
+                    }
                     print ("User has Joined");
-                    on_user_join (chan, nick);
-                    return;
+                    on_user_join (chan, sender);
+                    break;
             }
         }
 
@@ -171,17 +174,17 @@ namespace doodleIRC {
                 case "PING":
                     print ("pinged\n");
                     raw_send (line.replace ("PING","PONG"));
-                    return;
+                    break;
 
                 case "NOTICE":
                     print ("Noice: "+msg+"\n");
                     on_notice (msg);
-                    return;
+                    break;
 
                 case "ERROR":
                     print ("An Error Occured: %s\n".printf (msg));
                     on_error (msg);
-                    return;
+                    break;
             }
         }
 
@@ -195,20 +198,20 @@ namespace doodleIRC {
             switch (cmd) {
                 case "001":
                     on_connect_complete ();
-                    return;
+                    break;
 
                 case "005":
                     // this.connect (msg);
-                    return;
+                    break;
 
                 case "301":
                     print ("Away: "+msg);
-                    return;
+                    break;
 
                 case "433": // nick name is use
                     change_nick (this.nick+"_");
                     rejoin_channels ();
-                    return;
+                    break;
 
                 case "353": //RPL_NAMESLISTED
                     var chan = first_split[4];
@@ -220,7 +223,7 @@ namespace doodleIRC {
                         list_of_names.set (chan, msg);
                     }
 
-                    return;
+                    break;
 
                 case "366": //RPL_ENDOFNAMES
                     foreach (var channel in list_of_names.keys.to_array ()) {
@@ -228,23 +231,23 @@ namespace doodleIRC {
                     }
 
                     list_of_names.clear ();
-                    return;
+                    break;
             }
         }
 
         private void parse_named_msg (string line, out string sender,out string cmd,
                                       out string chan, out string msg) {
-            //split the message from the info
+            // split the message from the info
             var first_split = line.split (":");
             var info = first_split[1];
-            //msg = join_str_ar (2, first_split.length, first_split);
+            // msg = join_str_ar (2, first_split.length, first_split);
             msg = line.split (" :")[1];
 
-            //split the info to extract sender and chan
+            // split the info to extract sender and chan
             var second_split = info.split (" ");
             cmd = second_split[1].strip ();
             chan = second_split[2].strip ();
-            sender = second_split[0].strip ();
+            sender = second_split[0].strip ().split ("!")[0];
         }
 
         private void raw_send (string line) {
