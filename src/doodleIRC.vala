@@ -57,9 +57,9 @@ namespace doodleIRC {
 
             on_connect_complete.connect (() => {
                 to_send.foreach ((cmd) => {
-                     print ("Sending "+cmd);
-                     raw_send (cmd);
-                     to_send.remove (cmd);
+                    print ("Sending "+cmd);
+                    raw_send (cmd);
+                    to_send.remove (cmd);
                 });
             });
         }
