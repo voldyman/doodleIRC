@@ -1,3 +1,23 @@
+// -*- Mode: vala; indent-tabs-mode: nil; tab-width: 4 -*-
+/***
+    BEGIN LICENSE
+
+    Copyright (C) 2013 Akshay Shekher <voldyman666@gmail.com>
+    This program is free software: you can redistribute it and/or modify it
+    under the terms of the GNU Lesser General Public License version 3, as published
+    by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranties of
+    MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+    PURPOSE.  See the GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program.  If not, see <http://www.gnu.org/licenses/>
+
+    END LICENSE
+***/
+
 namespace doodleIRC {
 
     public class DoodleIRCServer {
@@ -11,7 +31,6 @@ namespace doodleIRC {
         public signal void on_user_join (string chan, string nick);
         public signal void on_user_quit (string chan, string nick, string msg);
         public signal void on_names_listed (string chan,string[] names);
-
 
         public List<string> chans;
         string nick;
@@ -36,7 +55,7 @@ namespace doodleIRC {
 
             list_of_names = new Gee.HashMap<string,string> ();
 
-            on_connect_complete.connect (() =>{
+            on_connect_complete.connect (() => {
                 to_send.foreach ((cmd) => {
                     print ("Sending "+cmd);
                     raw_send (cmd);
@@ -49,7 +68,6 @@ namespace doodleIRC {
             print ("Exiting");
             quit_server ("Client Quit");
         }
-
 
         public async void connect (string server = "") {
             try {
@@ -69,7 +87,7 @@ namespace doodleIRC {
 
                 // Send USER request
                 var message = "USER %s %s %s :%s\r\n".printf (user.username, user.hostname,
-                                                            user.servername, user.realname);
+                                                              user.servername, user.realname);
                 raw_send (message);
                 print ("Wrote request USER\n");
 
@@ -80,7 +98,7 @@ namespace doodleIRC {
 
                 wait ();
             } catch (Error e) {
-                    error ("Could not connect: %s".printf (e.message));
+                error ("Could not connect: %s".printf (e.message));
             }
 
         }
@@ -92,13 +110,14 @@ namespace doodleIRC {
             } catch (Error e) {
                 print ("Error: %s\n".printf (e.message));
             }
+
             if (connected)
                 wait ();
         }
 
         private void parse_line (string line) {
+            print (line + "\n");
 
-            print (line+"\n");
             if (line[0] != ':') {
                 process_named_server_message (line);
                 return;
@@ -108,8 +127,7 @@ namespace doodleIRC {
                 if ((line.split (" ")[1][0]).isdigit ()) {
                     process_numeric_cmd (line);
                     return;
-                }
-                else {
+                } else {
                     process_named_message (line);
                     return;
                 }
@@ -117,7 +135,7 @@ namespace doodleIRC {
         }
 
         private void process_named_message (string line) {
-            string sender="",cmd="",chan="",msg="";
+            string sender="", cmd="", chan="", msg="";
             parse_named_msg (line, out sender,out cmd, out  chan, out msg);
 
             switch (cmd.up ()) {
@@ -128,6 +146,7 @@ namespace doodleIRC {
                         on_action (sender, chan, msg);
                         return;
                     }
+
                     print ("Chan-> "+chan+"\nMSG-> "+msg+"\n");
                     on_message (sender, chan, msg);
                     return;
@@ -147,10 +166,11 @@ namespace doodleIRC {
         private void process_named_server_message (string line) {
             var cmd = line.split (" ")[0].strip ();
             var msg = line.split (" :")[1].strip ();
+
             switch (cmd.up ()) {
                 case "PING":
                     print ("pinged\n");
-                    raw_send (line.replace("PING","PONG"));
+                    raw_send (line.replace ("PING","PONG"));
                     return;
 
                 case "NOTICE":
@@ -168,8 +188,9 @@ namespace doodleIRC {
         private void process_numeric_cmd (string line) {
             var first_split = line.split (" ");
             var sender = first_split[0].strip ();
-            var cmd    = first_split[1].strip ();
-            var msg    = line.split (" :")[1].strip ();
+            var cmd = first_split[1].strip ();
+            var msg = line.split (" :")[1].strip ();
+
             /* more info about these commands can be found at the IRC RFC page */
             switch (cmd) {
                 case "001":
@@ -177,7 +198,7 @@ namespace doodleIRC {
                     return;
 
                 case "005":
-                   // this.connect (msg);
+                    // this.connect (msg);
                     return;
 
                 case "301":
@@ -195,15 +216,17 @@ namespace doodleIRC {
                         var names = list_of_names.get (chan);
                         names = " " + msg;
                         list_of_names.set (chan, names);
-                    }
-                    else
+                    } else {
                         list_of_names.set (chan, msg);
+                    }
+
                     return;
 
                 case "366": //RPL_ENDOFNAMES
-                    foreach (var channel in list_of_names.keys.to_array()) {
+                    foreach (var channel in list_of_names.keys.to_array ()) {
                         on_names_listed (channel, list_of_names.get (channel).split (" "));
                     }
+
                     list_of_names.clear ();
                     return;
             }
@@ -270,7 +293,7 @@ namespace doodleIRC {
         }
 
         public void get_names (string chan) {
-            send ("NAMES %s\r\n".printf(chan));
+            send ("NAMES %s\r\n".printf (chan));
         }
 
         public void set_away (string reason) {
