@@ -1,5 +1,5 @@
 #doodleIRC
-*a small irc library written in vala.*
+*a small irc library written in Vala*
 
 doodleIRC was originally written for [elementaryOS's](http://elementaryos.org) chat client.
 
