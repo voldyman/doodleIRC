@@ -97,7 +97,7 @@ namespace doodleIRC {
                 raw_send (message);
                 print ("Wrote nick request\n");
 
-                wait ();
+                wait.begin ();
             } catch (Error e) {
                 error ("Could not connect: %s".printf (e.message));
             }
@@ -113,7 +113,7 @@ namespace doodleIRC {
             }
 
             if (connected)
-                wait ();
+                wait.begin ();
         }
 
         private void parse_line (string line) {
@@ -190,7 +190,8 @@ namespace doodleIRC {
 
         private void process_numeric_cmd (string line) {
             var first_split = line.split (" ");
-            var sender = first_split[0].strip ();
+            /* this might come handy in the future :) */
+            //var sender = first_split[0].strip ();
             var cmd = first_split[1].strip ();
             var msg = line.split (" :")[1].strip ();
 
@@ -322,7 +323,6 @@ namespace doodleIRC {
         }
 
         public void write_action (string chan, string msg) {
-            string special_char = ((char) 1).to_string ();
             write (chan, "\001ACTION %s\001\r\n".printf (msg));
         }
 
