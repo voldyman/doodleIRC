@@ -296,6 +296,10 @@ namespace doodleIRC {
             send ("PRIVMSG %s :%s\r\n".printf (chan, msg));
         }
 
+        public void notice (string to, string text) {
+            send ("NOTICE %s :%s\r\n".printf (to, text));
+        }
+
         public void get_names (string chan) {
             send ("NAMES %s\r\n".printf (chan));
         }
