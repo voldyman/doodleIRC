@@ -54,7 +54,8 @@ namespace doodleIRC {
         SocketConnection connection;
         DataInputStream response;
         bool connected;
-        List<string> to_send;
+
+        Queue<string> to_send;
         Gee.HashMap<string, string> list_of_names;
 
         public DoodleIRCServer (string url, User user,string nick) {
@@ -68,16 +69,15 @@ namespace doodleIRC {
             };
             this.chans = new List<Channel> ();
             connected = false;
-            to_send = new List<string> ();
+            to_send = new Queue<string> ();
 
             list_of_names = new Gee.HashMap<string,string> ();
 
             on_connect_complete.connect (() => {
-                to_send.foreach ((cmd) => {
-                    print ("Sending "+cmd);
+                string cmd;
+                while ((cmd = to_send.pop_head ()) != null) {
                     raw_send (cmd);
-                    to_send.remove (cmd);
-                });
+                }
             });
         }
 
@@ -174,6 +174,8 @@ namespace doodleIRC {
                 case "JOIN":
                     if (sender == nick) {
                         on_join_complete (chan, sender);
+                        var channel = new Channel (chan);
+                        chans.append (channel);
                         break;
                     }
                     print ("User has Joined");
@@ -227,7 +229,6 @@ namespace doodleIRC {
 
                 case "433": // nick name is use
                     change_nick (this.nick + "_");
-                    rejoin_channels ();
                     break;
 
                 case "353": //RPL_NAMESLISTED
@@ -289,16 +290,7 @@ namespace doodleIRC {
             if (connected)
                 raw_send (cmd);
             else
-                to_send.append (cmd);
-        }
-
-        private void rejoin_channels () {
-            // Send JOIN request
-            foreach (var chan in chans) {
-                string chan_name = chan.name;
-                raw_send ("JOIN %s\r\n".printf (chan_name));
-                print ("Wrote request to join %s\n".printf (chan_name));
-            }
+                to_send.push_tail (cmd);
         }
 
         public void kick_user (string chan, string user, string reason) {
@@ -306,9 +298,10 @@ namespace doodleIRC {
         }
 
         public void join_chan (string chan, string key="") {
-            send ("JOIN %s :%s\r\n".printf (chan, key));
-            var channel = new Channel (chan);
-            chans.append (channel);
+            if (key == "")
+                send ("JOIN %s\r\n".printf (chan));
+            else
+                send ("JOIN &%s %s\r\n".printf (chan, key));
         }
 
         public void quit_server (string message) {
@@ -363,6 +356,7 @@ namespace doodleIRC {
         }
 
         public void get_topic (string chan, GetTopicFunc func) {
+            topic_received = null;
             topic_received = func;
             send ("TOPIC %s".printf (chan));
         }
