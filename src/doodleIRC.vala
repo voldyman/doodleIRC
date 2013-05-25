@@ -19,6 +19,16 @@
 ***/
 
 namespace doodleIRC {
+    public class Channel {
+        public string nick;
+        public string topic;
+        public List<string> users;
+        public string name;
+
+        public Channel (string name) {
+            this.name = name;
+        }
+    }
 
     public class DoodleIRCServer {
 
@@ -33,7 +43,10 @@ namespace doodleIRC {
         public signal void on_user_quit (string chan, string nick, string msg);
         public signal void on_names_listed (string chan,string[] names);
 
-        public List<string> chans;
+        public delegate void GetTopicFunc (string chan, string topic);
+        public List<Channel> chans;
+
+        GetTopicFunc topic_received;
         string nick;
         bool away;
         string server_url;
@@ -50,7 +63,10 @@ namespace doodleIRC {
             this.nick = nick;
             away = false;
 
-            this.chans = new List<string> ();
+            topic_received = (chan, topic) => {
+                debug (chan + "=>" + topic);
+            };
+            this.chans = new List<Channel> ();
             connected = false;
             to_send = new List<string> ();
 
@@ -210,7 +226,7 @@ namespace doodleIRC {
                     break;
 
                 case "433": // nick name is use
-                    change_nick (this.nick+"_");
+                    change_nick (this.nick + "_");
                     rejoin_channels ();
                     break;
 
@@ -232,6 +248,15 @@ namespace doodleIRC {
                     }
 
                     list_of_names.clear ();
+                    break;
+                case "332":
+                    var chan = first_split[3].strip ();
+                    chans.foreach((channel) => {
+                        if (channel.name == chan) {
+                            channel.topic = msg;
+                            topic_received (channel.name, msg);
+                        }
+                    });
                     break;
             }
         }
@@ -269,9 +294,10 @@ namespace doodleIRC {
 
         private void rejoin_channels () {
             // Send JOIN request
-            foreach (string chan in chans) {
-                raw_send ("JOIN %s\r\n".printf (chan));
-                print ("Wrote request to join %s\n".printf (chan));
+            foreach (var chan in chans) {
+                string chan_name = chan.name;
+                raw_send ("JOIN %s\r\n".printf (chan_name));
+                print ("Wrote request to join %s\n".printf (chan_name));
             }
         }
 
@@ -281,7 +307,8 @@ namespace doodleIRC {
 
         public void join_chan (string chan, string key="") {
             send ("JOIN %s :%s\r\n".printf (chan, key));
-            chans.append (chan);
+            var channel = new Channel (chan);
+            chans.append (channel);
         }
 
         public void quit_server (string message) {
@@ -333,6 +360,11 @@ namespace doodleIRC {
         public void disconnect () {
             raw_send ("QUIT :bye");
             connected = false;
+        }
+
+        public void get_topic (string chan, GetTopicFunc func) {
+            topic_received = func;
+            send ("TOPIC %s".printf (chan));
         }
     }
 

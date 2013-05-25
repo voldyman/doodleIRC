@@ -45,7 +45,7 @@ void main (string[] args) {
             switch (text.split (" ")[0].replace ("/","")) {
                 case "me":
                     freenode.chans.foreach ((chan) => {
-                        freenode.write_action (chan, text.replace ("/me ", ""));
+                        freenode.write_action (chan.name, text.replace ("/me ", ""));
                     });
                     break;
                 case "away":
@@ -55,14 +55,14 @@ void main (string[] args) {
         }
         else {
             freenode.chans.foreach ((chan) => {
-                freenode.write (chan, send_entry.text);
+                freenode.write (chan.name, send_entry.text);
             });
         }
         send_entry.text = "";
     });
 
     names_btn.clicked.connect (() => {
-        freenode.get_names (freenode.chans.first ().data);
+        freenode.get_names (freenode.chans.first ().data.name);
     });
 
     freenode.on_message.connect ((sender, chan, message)=> {
@@ -71,6 +71,9 @@ void main (string[] args) {
 
     connect_btn.clicked.connect (() => {
         freenode.join_chan (channel_entry.text);
+        freenode.get_topic (channel_entry.text, (channel, topic) => {
+            textView.buffer.set_text (textView.buffer.text + "\n" + channel + " TOPIC => " + topic);
+        });
     });
 
     window.destroy.connect ( () => {
@@ -89,7 +92,7 @@ void main (string[] args) {
         print ("*%s %s\n".printf (sender,message));
     });
 
-    freenode.connect ();
+    freenode.connect.begin ();
     window.show_all ();
     Gtk.main ();
 }
