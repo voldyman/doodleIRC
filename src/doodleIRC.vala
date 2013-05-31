@@ -47,13 +47,14 @@ namespace doodleIRC {
         public List<Channel> chans;
 
         GetTopicFunc topic_received;
-        string nick;
+        public string nick;
         bool away;
-        string server_url;
+        public string server_url;
+        public string network_name;
         User user;
         SocketConnection connection;
         DataInputStream response;
-        bool connected;
+        public bool connected;
 
         Queue<string> to_send;
         Gee.HashMap<string, string> list_of_names;
@@ -220,7 +221,13 @@ namespace doodleIRC {
                     break;
 
                 case "005":
-                    // this.connect (msg);
+                    string[] args = msg.split (" ");
+                    for (int i=0; i<args.length; i++) {
+                        if (args[i].has_prefix ("NETWORK")) {
+                            string[] entry = args[i].split ("=");
+                            this.network_name = entry[1];
+                        }
+                    }
                     break;
 
                 case "301":
@@ -358,7 +365,7 @@ namespace doodleIRC {
         public void get_topic (string chan, GetTopicFunc func) {
             topic_received = null;
             topic_received = func;
-            send ("TOPIC %s".printf (chan));
+            send ("TOPIC %s\r\n".printf (chan));
         }
     }
 
